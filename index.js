@@ -1,4 +1,5 @@
 const types = {}
+const bytes = require('bytesish')
 
 const strf = obj => JSON.stringify(obj)
 const cidSymbol = Symbol.for('@ipld/js-cid/CID')
@@ -14,15 +15,31 @@ const validateField = (api, key, schema, value) => {
     throw new Error(`Cannot be null "${key}"`)
   }
   if (typeof schema.type === 'string') {
+    if (!api[schema.type]) throw new VE('Missing type', schema.type)
+    return api[schema.type].validate(value)
   } else if (typeof schema.type === 'object') {
     if (schema.type.kind === 'link') {
       return api.Link.validate(value)
+    } else if (schema.type.kind === 'map') {
+      return api.Map.validate(value, schema.type)
     }
     throw new Error('Unknown field type ' + strf(schema.type))
+  }
+  if (!api[schema.type]) {
+    console.error({api, type: schema.type, value})
   }
   api[schema.type].validate(value)
   return value
 }
+
+class ValidationError extends Error {
+  constructor (msg, obj) {
+    super(msg + ' ' + strf(obj))
+    this.value = obj
+  }
+}
+
+const VE = ValidationError
 
 class SchemaType {
   constructor (api, schema) {
@@ -33,18 +50,22 @@ class SchemaType {
 }
 types.Map = class Map extends SchemaType {
   static kind = 'map'
-  validate (obj) {
-    if (typeof obj !== 'object') throw new Error('Must be object ' + strf(obj))
+  validate (obj, fieldSchema) {
+    if (typeof obj !== 'object') throw new VE('Must be object', obj)
+    if (Array.isArray(obj)) throw new VE('Cannot be array', obj)
     if (!this.schema) return obj
     // TODO: accept Map objects and validate keys
     for (const [key, value] of Object.entries(obj)) {
-      validateField(this.api, key, {type: this.schema.valueType}, value)
+      const schema = fieldSchema || this.schema
+      validateField(this.api, key, {type: schema.keyType}, key)
+      validateField(this.api, key, {type: schema.valueType}, value)
     }
     return obj
   }
 }
 types.Struct = class Struct extends SchemaType {
   static kind = 'struct'
+  static schemaType = true
   constructor (api, schema) {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
@@ -52,7 +73,7 @@ types.Struct = class Struct extends SchemaType {
   validate (obj) {
     switch (this.representation) {
       case "map": return this.validateMap(obj)
-      default: throw new Error('Unknown representation ' + strf(this.schema.representation))
+      default: throw new VE('Unknown representation', this.schema.representation)
     }
   }
   validateMap (obj) {
@@ -64,6 +85,7 @@ types.Struct = class Struct extends SchemaType {
 }
 types.Union = class Union extends SchemaType {
   static kind = 'union'
+  static schemaType = true
   constructor (api, schema) {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
@@ -71,15 +93,15 @@ types.Union = class Union extends SchemaType {
   validate (obj) {
     switch (this.representation) {
       case "keyed": return this.validateKeyed(obj)
-      default: throw new Error('Unknown representation ' + strf(this.schema.representation))
+      default: throw new VE('Unknown representation', this.schema.representation)
     }
   }
   validateKeyed (obj) {
     const schema = this.schema.representation.keyed
     const key = Object.keys(obj)[0]
-    if (!schema[key]) throw new Error(`Unknown union key "${key}"`)
+    if (!schema[key]) throw new VE(`Unknown union key`, key)
     const name = schema[key]
-    if (!this.api[name]) throw new Error(`Missing type named "${name}"`)
+    if (!this.api[name]) throw new VE(`Missing type named`, name)
     this.api[name].validate(obj[key])
     return obj
   }
@@ -87,7 +109,7 @@ types.Union = class Union extends SchemaType {
 types.List = class List extends SchemaType {
   static kind = 'list'
   validate (obj) {
-    if (!Array.isArray(obj)) throw new Error('Not encoded as list ' + strf(obj))
+    if (!Array.isArray(obj)) throw new VE('Not encoded as list', obj)
     if (!this.schema) return obj
     let i = 0
     for (const value of obj) {
@@ -100,17 +122,52 @@ types.List = class List extends SchemaType {
 types.String = class String extends SchemaType {
   static kind = 'string'
   validate (obj) {
-    if (typeof obj !== 'string') throw new Error('Must be string ' + strf(obj))
+    if (typeof obj !== 'string') throw new VE('Must be string', obj)
     return obj
   }
 }
 types.Link = class Link extends SchemaType {
   static kind = 'link'
   validate (obj) {
-    if (!isCID(obj)) throw new Error('Not a valid link ' + strf(obj))
+    if (!isCID(obj)) throw new VE('Not a valid link', obj)
     return obj
   }
 }
+types.Bytes = class Bytes extends SchemaType {
+  static kind = 'bytes'
+  validate (obj) {
+    try {
+      bytes(obj)
+    } catch (e) {
+      throw new VE('Not a valid binary object', obj)
+    }
+    return obj
+  }
+}
+types.Int = class Int extends SchemaType {
+  static kind = 'int'
+  validate (obj) {
+    if (typeof obj !== 'number') throw new VE('Must be a number', obj)
+    if (Number(obj) === obj && obj % 1 !== 0) throw new VE('Int must not be a float', obj)
+    return obj
+  }
+}
+types.Float = class Float extends SchemaType {
+  static kind = 'float'
+  validate (obj) {
+    if (typeof obj !== 'number') throw new VE('Must be a number', obj)
+    if (Number(obj) === obj && obj % 1 === 0) throw new VE('Int must not be a float', obj)
+    return obj
+  }
+}
+types.Bool = class Bool extends SchemaType {
+  static kind = 'bool'
+  validate (obj) {
+    if (typeof obj !== 'boolean') throw new VE('Must be boolean', obj)
+    return obj
+  }
+}
+
 
 const kinds = {}
 for (const [, CLS] of Object.entries(types)) {
@@ -118,10 +175,6 @@ for (const [, CLS] of Object.entries(types)) {
 }
 
 const addSchemas = (api, ...schemas) => {
-  api.String = new types.String(api)
-  api.List = new types.List(api)
-  api.Map = new types.Map(api)
-  api.Link = new types.Link(api)
   for (const parsed of schemas) {
     for (const [key, schema] of Object.entries(parsed.types)) {
       if (api[key]) throw new Error('Cannot create duplicate type: ' + key)
@@ -142,6 +195,10 @@ const addSchemas = (api, ...schemas) => {
   return ret
 }
 const create = (...schemas) => {
-  return addSchemas({}, ...schemas)
+  const api = {}
+  for (const [name, CLS] of Object.entries(types)) {
+    if (!CLS.schemaType) api[name] = new CLS(api)
+  }
+  return addSchemas(api, ...schemas)
 }
 module.exports = create

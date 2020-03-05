@@ -4,14 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/*.spec.js"
   },
   "keywords": [],
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (https://www.mikealrogers.com/)",
   "license": "(Apache-2.0 AND MIT)",
   "devDependencies": {
+    "@ipld/block": "^2.1.3",
     "hundreds": "0.0.2",
     "ipld-schema": "^0.3.2",
-    "mocha": "^7.1.0"
+    "mocha": "^7.1.0",
+    "standard": "^14.3.1"
+  },
+  "dependencies": {
+    "bytesish": "^0.4.1"
   }
 }

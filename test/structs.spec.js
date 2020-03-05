@@ -13,11 +13,9 @@ test('basic struct', done => {
     i Int
   }
   `
-  const classes = main(parse(schema))
+  const validate = main(parse(schema))
   const hw = { name: 'hello world', i: 1 }
-  const t = classes.Test.encoder(hw)
-
-  assert.deepStrictEqual(t.encode(), hw)
+  validate(hw, 'Test')
   done()
 })
 
@@ -27,12 +25,9 @@ test('nullable', done => {
     name nullable String
   }
   `
-  const classes = main(parse(schema))
-  let t = classes.Test.encoder({ name: 'hello world' })
-
-  assert.deepStrictEqual(t.encode(), { name: 'hello world' })
-  t = classes.Test.encoder({ name: null })
-  assert.deepStrictEqual(t.encode(), { name: null })
+  const validate = main(parse(schema))
+  validate({ name: 'hello world' }, 'Test')
+  validate({ name: null }, 'Test')
   done()
 })
 
@@ -43,9 +38,8 @@ test('properties w/o schema', done => {
   }
   `
   const hw = { name: 'hello', test: 'world' }
-  const classes = main(parse(schema))
-  const t = classes.Test.encoder(hw)
-  assert.deepStrictEqual(t.encode(), hw)
+  const validate = main(parse(schema))
+  validate(hw, 'Test')
   done()
 })
 
@@ -62,17 +56,6 @@ test('struct in struct', async () => {
   }
   `
   const hw = { b: { c: { name: 'hello' } } }
-  const classes = main(parse(schema))
-
-  const a = classes.A.encoder(hw)
-  assert.deepStrictEqual(a.encode(), hw)
-  let x = await a.get('b/c/name')
-  assert.deepStrictEqual(x, 'hello')
-
-  x = await a.getNode('b/c/name')
-  assert.strictEqual(x.value, 'hello')
-  assert.strictEqual(x.constructor.name, 'String')
-
-  x = await a.getNode('b')
-  assert.strictEqual(x.constructor.name, 'B')
+  const validate = main(parse(schema))
+  validate(hw, 'A')
 })

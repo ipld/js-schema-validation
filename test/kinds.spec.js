@@ -18,10 +18,10 @@ test('all kinds', done => {
   type TestList list
   type TestBool bool
   `
-  const types = main(parse(schema))
+  const validate = main(parse(schema))
 
   let _test = (name, valid) => {
-    types[name].validate(valid)
+    validate(valid, name)
   }
   _test('TestString', 'string')
   _test('TestInt', 120)
@@ -34,7 +34,7 @@ test('all kinds', done => {
   _test = (name, invalid) => {
     let threw = true
     try {
-      types[name].valiate(invalid)
+      validate(invalid, name)
       threw = false
     } catch (e) {
       assert.ok(true)
@@ -48,9 +48,9 @@ test('all kinds', done => {
   _test('TestList', {})
   _test('TestNull', 'asdf')
   _test('TestBool', 'asdf')
-  for (const key of Object.keys(types)) {
+  for (const key of ['String', 'Int', 'Float', 'Map', 'List', 'Null', 'Bool']) {
     // test undefined
-    _test(key)
+    _test('Test' + key)
   }
 
   done()
@@ -68,7 +68,7 @@ test('all kinds in struct', done => {
     null Null
   }
   `
-  const types = main(parse(schema))
+  const validate = main(parse(schema))
   const hw = {
     string: 'test',
     int: 1,
@@ -78,7 +78,7 @@ test('all kinds in struct', done => {
     list: [null],
     null: null
   }
-  types.Test.validate(hw)
+  validate(hw, 'Test')
   done()
 })
 
@@ -88,10 +88,10 @@ test('advanced features', done => {
     type Bar [Foo]
     type Baz [{String:Foo}]
   `
-  const types = main(parse(schema))
+  const validate = main(parse(schema))
 
   let _test = (name, value) => {
-    types[name].validate(value)
+    validate(value, name)
   }
   _test('Bar', ['asdf'])
   _test('Bar', [])
@@ -101,7 +101,7 @@ test('advanced features', done => {
   _test = (name, invalid) => {
     let threw = true
     try {
-      types[name].validate(invalid)
+      validate(invalid, name)
       threw = false
     } catch (e) {
       // noop
