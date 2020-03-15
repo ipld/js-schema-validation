@@ -59,3 +59,21 @@ test('struct in struct', async () => {
   const validate = main(parse(schema))
   validate(hw, 'A')
 })
+
+test('struct w/ rename', async () => {
+  const schema = `
+  type R struct {
+    hello String (rename "world")
+  }
+  `
+  const validate = main(parse(schema))
+  let threw = true
+  try {
+    validate({ hello: 'world' }, 'R')
+    threw = false
+  } catch (e) {
+    if (e.message !== '"world" is undefined') throw e
+  }
+  assert.ok(threw)
+  validate({ world: 'hello' }, 'R')
+})

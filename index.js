@@ -69,6 +69,14 @@ types.Struct = class Struct extends SchemaType {
   constructor (api, schema) {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
+    if (this.representation === 'map' && schema.representation.map.fields) {
+      for (const [key, value] of Object.entries(schema.representation.map.fields)) {
+        if (value.rename) {
+          schema.fields[value.rename] = schema.fields[key]
+          delete schema.fields[key]
+        }
+      }
+    }
   }
   validate (obj) {
     switch (this.representation) {
@@ -90,7 +98,7 @@ types.Union = class Union extends SchemaType {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
   }
-  validate (obj) {
+  validate (obj) {;;
     switch (this.representation) {
       case "keyed": return this.validateKeyed(obj)
       default: throw new VE('Unknown representation', this.schema.representation)
