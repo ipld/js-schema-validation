@@ -109,8 +109,13 @@ types.Union = class Union extends SchemaType {
     const key = Object.keys(obj)[0]
     if (!schema[key]) throw new VE(`Unknown union key`, key)
     const name = schema[key]
-    if (!this.api[name]) throw new VE(`Missing type named`, name)
-    this.api[name].validate(obj[key])
+    if (typeof name === 'object') {
+      if (!name.kind || name.kind !== 'link') throw new Error("Don't know what this schema feature is")
+      if (!isCID(obj[key])) throw new VE(`Property must be link`, name)
+    } else {
+      if (!this.api[name]) throw new VE(`Missing type named`, name)
+      this.api[name].validate(obj[key])
+    }
     return obj
   }
 }

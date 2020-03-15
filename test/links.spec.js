@@ -48,3 +48,27 @@ test('link without expected type', async () => {
   const origin = { b: await b.cid() }
   validate(origin, 'Test')
 })
+
+test('link in union', async () => {
+  const schema = `
+  type Blah string
+  type Test union {
+    | &Blah "t"
+  } representation keyed
+  `
+  const b = Block.encoder({ hello: 'world' }, 'dag-cbor')
+  const validate = main(parse(schema))
+  validate({ t: await b.cid() }, 'Test')
+})
+
+test('link in struct', async () => {
+  const schema = `
+  type Blah string
+  type Test struct{
+    t &Blah
+  }
+  `
+  const b = Block.encoder({ hello: 'world' }, 'dag-cbor')
+  const validate = main(parse(schema))
+  validate({ t: await b.cid() }, 'Test')
+})
