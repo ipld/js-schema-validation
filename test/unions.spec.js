@@ -2,6 +2,7 @@
 const { it } = require('mocha')
 const main = require('../')
 const parse = require('./parse')
+const Block = require('@ipld/block')
 
 const test = it
 
@@ -30,4 +31,38 @@ test('test path get', async () => {
   const hw = { name: 'hello world' }
   validate(hw, 'Test')
   validate({ map: { x: hw } }, 'Test')
+})
+
+test('kinded union', async () => {
+  const schema = `
+  type MyMap map
+  type MyList list
+  type MyNull null
+  type MyString string
+  type MyInt int
+  type MyFloat float
+  type MyBytes bytes
+  type MyLink link
+  type Test union {
+    | MyMap map
+    | MyList list
+    | MyString string
+    | MyInt int
+    | MyFloat float
+    | MyBytes bytes
+    | MyLink link
+    | MyNull null
+  } representation kinded
+  `
+  const validate = main(parse(schema))
+  const t = obj => validate(obj, 'Test')
+  t(null)
+  t({})
+  t([])
+  t('str')
+  t(1)
+  t(0)
+  t(2.9)
+  t(await Block.encoder({}, 'dag-cbor').cid())
+  t(Buffer.from('asdf'))
 })

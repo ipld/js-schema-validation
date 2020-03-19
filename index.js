@@ -25,9 +25,6 @@ const validateField = (api, key, schema, value) => {
     }
     throw new Error('Unknown field type ' + strf(schema.type))
   }
-  if (!api[schema.type]) {
-    console.error({api, type: schema.type, value})
-  }
   api[schema.type].validate(value)
   return value
 }
@@ -91,6 +88,25 @@ types.Struct = class Struct extends SchemaType {
     return obj
   }
 }
+
+const getKind = value => {
+  if (value === null) return 'null'
+  const type = typeof value
+  if (type === 'string') return 'string'
+  if (type === 'number') {
+    if (Number(value) === value && value % 1 === 0) return 'int'
+    return 'float'
+  }
+  if (type === 'object') {
+    if (Buffer.isBuffer(value)) return 'bytes'
+    if (isCID(value)) return 'link'
+    if (Array.isArray(value)) return 'list'
+    return 'map'
+  }
+  // istanbul ignore next
+  throw new VE('Cannot find type', value)
+}
+
 types.Union = class Union extends SchemaType {
   static kind = 'union'
   static schemaType = true
@@ -101,8 +117,16 @@ types.Union = class Union extends SchemaType {
   validate (obj) {;;
     switch (this.representation) {
       case "keyed": return this.validateKeyed(obj)
+      case "kinded": return this.validateKinded(obj)
       default: throw new VE('Unknown representation', this.schema.representation)
     }
+  }
+  validateKinded (obj) {
+    const kind = getKind(obj)
+    const key = this.schema.representation.kinded[kind]
+    if (!key) throw new VE('Union does not have kind', kind)
+    this.api[key].validate(obj)
+    return obj
   }
   validateKeyed (obj) {
     const schema = this.schema.representation.keyed
@@ -178,6 +202,13 @@ types.Bool = class Bool extends SchemaType {
   validate (obj) {
     if (typeof obj !== 'boolean') throw new VE('Must be boolean', obj)
     return obj
+  }
+}
+types.Null = class Null extends SchemaType {
+  static kind = 'null'
+  validate (obj) {
+    if (obj === null) return null
+    throw new VE('Must be null', obj)
   }
 }
 
