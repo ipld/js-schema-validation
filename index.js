@@ -15,6 +15,7 @@ const validateField = (api, key, schema, value) => {
     throw new Error(`Cannot be null "${key}"`)
   }
   if (typeof schema.type === 'string') {
+    if (kinds[schema.type]) return (new kinds[schema.type](api, schema)).validate(value)
     if (!api[schema.type]) throw new VE('Missing type', schema.type)
     return api[schema.type].validate(value)
   } else if (typeof schema.type === 'object') {
@@ -78,10 +79,23 @@ types.Struct = class Struct extends SchemaType {
   validate (obj) {
     switch (this.representation) {
       case "map": return this.validateMap(obj)
+      case "tuple": return this.validateTuple(obj)
       default: throw new VE('Unknown representation', this.schema.representation)
     }
   }
+  validateTuple (obj) {
+    if (!Array.isArray(obj)) throw new VE('Value must be list for tuple representation', obj)
+    const values = [...obj]
+    for (const [key, schema] of Object.entries(this.schema.fields)) {
+      validateField(this.api, key, schema, values.shift())
+    }
+    if (values.length) throw new VE('Too many values in tuple', values)
+    return obj
+  }
   validateMap (obj) {
+    if (obj === null || typeof obj !== 'object' || isCID(obj) || Array.isArray(obj)) {
+      throw new VE('Value must be map when using keyed representation', obj)
+    }
     for (const [key, schema] of Object.entries(this.schema.fields)) {
       validateField(this.api, key, schema, obj[key])
     }

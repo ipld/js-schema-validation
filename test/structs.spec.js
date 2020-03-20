@@ -77,3 +77,22 @@ test('struct w/ rename', async () => {
   assert.ok(threw)
   validate({ world: 'hello' }, 'R')
 })
+
+test('struct w/ tuple representation', async () => {
+  const schema = `
+  type Test struct {
+    one string
+    two int
+  } representation tuple
+  `
+  const validate = main(parse(schema))
+  validate(['asdf', 1], 'Test')
+  let threw = true
+  try {
+    validate({ one: 'asdf', two: 1 }, 'Test')
+    threw = false
+  } catch (e) {
+    if (!e.message.startsWith('Value must be list for tuple representation')) throw e
+  }
+  assert.ok(threw)
+})
