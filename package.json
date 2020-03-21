@@ -14,7 +14,7 @@
     "hundreds": "0.0.2",
     "ipld-schema": "^0.3.2",
     "mocha": "^7.1.0",
-    "standard": "^14.3.1"
+    "standard": "^14.3.3"
   },
   "dependencies": {
     "bytesish": "^0.4.1"

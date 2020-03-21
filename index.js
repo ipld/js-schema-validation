@@ -5,6 +5,8 @@ const strf = obj => JSON.stringify(obj)
 const cidSymbol = Symbol.for('@ipld/js-cid/CID')
 const isCID = node => !!(node && node[cidSymbol])
 
+const readonly = (obj, key, value) => Object.defineProperty(obj, key, { value })
+
 const validateField = (api, key, schema, value) => {
   if (typeof value === 'undefined') {
     if (schema.optional) return
@@ -44,10 +46,8 @@ class SchemaType {
     this.api = api
     this.schema = schema
   }
-  static isNode = true
 }
 types.Map = class Map extends SchemaType {
-  static kind = 'map'
   validate (obj, fieldSchema) {
     if (typeof obj !== 'object') throw new VE('Must be object', obj)
     if (Array.isArray(obj)) throw new VE('Cannot be array', obj)
@@ -55,15 +55,14 @@ types.Map = class Map extends SchemaType {
     // TODO: accept Map objects and validate keys
     for (const [key, value] of Object.entries(obj)) {
       const schema = fieldSchema || this.schema
-      validateField(this.api, key, {type: schema.keyType}, key)
-      validateField(this.api, key, {type: schema.valueType}, value)
+      validateField(this.api, key, { type: schema.keyType }, key)
+      validateField(this.api, key, { type: schema.valueType }, value)
     }
     return obj
   }
 }
+readonly(types.Map, 'kind', 'map')
 types.Struct = class Struct extends SchemaType {
-  static kind = 'struct'
-  static schemaType = true
   constructor (api, schema) {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
@@ -76,13 +75,15 @@ types.Struct = class Struct extends SchemaType {
       }
     }
   }
+
   validate (obj) {
     switch (this.representation) {
-      case "map": return this.validateMap(obj)
-      case "tuple": return this.validateTuple(obj)
+      case 'map': return this.validateMap(obj)
+      case 'tuple': return this.validateTuple(obj)
       default: throw new VE('Unknown representation', this.schema.representation)
     }
   }
+
   validateTuple (obj) {
     if (!Array.isArray(obj)) throw new VE('Value must be list for tuple representation', obj)
     const values = [...obj]
@@ -92,6 +93,7 @@ types.Struct = class Struct extends SchemaType {
     if (values.length) throw new VE('Too many values in tuple', values)
     return obj
   }
+
   validateMap (obj) {
     if (obj === null || typeof obj !== 'object' || isCID(obj) || Array.isArray(obj)) {
       throw new VE('Value must be map when using keyed representation', obj)
@@ -102,6 +104,8 @@ types.Struct = class Struct extends SchemaType {
     return obj
   }
 }
+readonly(types.Struct, 'kind', 'struct')
+readonly(types.Struct, 'schemaType', true)
 
 const getKind = value => {
   if (value === null) return 'null'
@@ -122,19 +126,20 @@ const getKind = value => {
 }
 
 types.Union = class Union extends SchemaType {
-  static kind = 'union'
-  static schemaType = true
   constructor (api, schema) {
     super(api, schema)
     this.representation = Object.keys(this.schema.representation)[0]
   }
-  validate (obj) {;;
+
+  validate (obj) {
+    ;;
     switch (this.representation) {
-      case "keyed": return this.validateKeyed(obj)
-      case "kinded": return this.validateKinded(obj)
+      case 'keyed': return this.validateKeyed(obj)
+      case 'kinded': return this.validateKinded(obj)
       default: throw new VE('Unknown representation', this.schema.representation)
     }
   }
+
   validateKinded (obj) {
     const kind = getKind(obj)
     const key = this.schema.representation.kinded[kind]
@@ -142,50 +147,53 @@ types.Union = class Union extends SchemaType {
     this.api[key].validate(obj)
     return obj
   }
+
   validateKeyed (obj) {
     const schema = this.schema.representation.keyed
     const key = Object.keys(obj)[0]
-    if (!schema[key]) throw new VE(`Unknown union key`, key)
+    if (!schema[key]) throw new VE('Unknown union key', key)
     const name = schema[key]
     if (typeof name === 'object') {
       if (!name.kind || name.kind !== 'link') throw new Error("Don't know what this schema feature is")
-      if (!isCID(obj[key])) throw new VE(`Property must be link`, name)
+      if (!isCID(obj[key])) throw new VE('Property must be link', name)
     } else {
-      if (!this.api[name]) throw new VE(`Missing type named`, name)
+      if (!this.api[name]) throw new VE('Missing type named', name)
       this.api[name].validate(obj[key])
     }
     return obj
   }
 }
+readonly(types.Union, 'kind', 'union')
+readonly(types.Union, 'schemaType', true)
+
 types.List = class List extends SchemaType {
-  static kind = 'list'
   validate (obj) {
     if (!Array.isArray(obj)) throw new VE('Not encoded as list', obj)
     if (!this.schema) return obj
     let i = 0
     for (const value of obj) {
       i++
-      validateField(this.api, i, {type: this.schema.valueType}, value)
+      validateField(this.api, i, { type: this.schema.valueType }, value)
     }
     return obj
   }
 }
+readonly(types.List, 'kind', 'list')
 types.String = class String extends SchemaType {
-  static kind = 'string'
   validate (obj) {
     if (typeof obj !== 'string') throw new VE('Must be string', obj)
     return obj
   }
 }
+readonly(types.String, 'kind', 'string')
 types.Link = class Link extends SchemaType {
-  static kind = 'link'
   validate (obj) {
     if (!isCID(obj)) throw new VE('Not a valid link', obj)
     return obj
   }
 }
+readonly(types.Link, 'kind', 'link')
 types.Bytes = class Bytes extends SchemaType {
-  static kind = 'bytes'
   validate (obj) {
     try {
       bytes(obj)
@@ -195,37 +203,37 @@ types.Bytes = class Bytes extends SchemaType {
     return obj
   }
 }
+readonly(types.Bytes, 'kind', 'bytes')
 types.Int = class Int extends SchemaType {
-  static kind = 'int'
   validate (obj) {
     if (typeof obj !== 'number') throw new VE('Must be a number', obj)
     if (Number(obj) === obj && obj % 1 !== 0) throw new VE('Int must not be a float', obj)
     return obj
   }
 }
+readonly(types.Int, 'kind', 'int')
 types.Float = class Float extends SchemaType {
-  static kind = 'float'
   validate (obj) {
     if (typeof obj !== 'number') throw new VE('Must be a number', obj)
     if (Number(obj) === obj && obj % 1 === 0) throw new VE('Int must not be a float', obj)
     return obj
   }
 }
+readonly(types.Float, 'kind', 'float')
 types.Bool = class Bool extends SchemaType {
-  static kind = 'bool'
   validate (obj) {
     if (typeof obj !== 'boolean') throw new VE('Must be boolean', obj)
     return obj
   }
 }
+readonly(types.Bool, 'kind', 'bool')
 types.Null = class Null extends SchemaType {
-  static kind = 'null'
   validate (obj) {
     if (obj === null) return null
     throw new VE('Must be null', obj)
   }
 }
-
+readonly(types.Null, 'kind', 'null')
 
 const kinds = {}
 for (const [, CLS] of Object.entries(types)) {
