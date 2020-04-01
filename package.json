@@ -22,5 +22,16 @@
   },
   "dependencies": {
     "bytesish": "^0.4.1"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ipld/js-schema-validation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ipld/js-schema-validation/issues"
+  },
+  "homepage": "https://github.com/ipld/js-schema-validation#readme"
 }
