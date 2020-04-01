@@ -4,7 +4,9 @@
   "description": "Validate decoded data against an IPLD Schema",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/*.spec.js",
+    "pretest": "standard",
+    "test": "npm run test:node && npm run test:browser",
+    "test:node": "mocha test/*.spec.js",
     "test:browser": "polendina --cleanup test/*.spec.js"
   },
   "keywords": [],

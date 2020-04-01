@@ -1,6 +1,6 @@
+/* global it */
 'use strict'
 const assert = require('assert')
-const { it } = require('mocha')
 const main = require('../')
 const parse = require('./parse')
 

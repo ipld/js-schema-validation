@@ -1,5 +1,5 @@
+/* global it */
 'use strict'
-const { it } = require('mocha')
 const main = require('../')
 const parse = require('./parse')
 const Block = require('@ipld/block')
