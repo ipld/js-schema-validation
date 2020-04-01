@@ -1,5 +1,5 @@
+const { Buffer } = require('buffer')
 const types = {}
-const bytes = require('bytesish')
 
 const strf = obj => JSON.stringify(obj)
 const cidSymbol = Symbol.for('@ipld/js-cid/CID')
@@ -195,12 +195,8 @@ types.Link = class Link extends SchemaType {
 readonly(types.Link, 'kind', 'link')
 types.Bytes = class Bytes extends SchemaType {
   validate (obj) {
-    try {
-      bytes(obj)
-    } catch (e) {
-      throw new VE('Not a valid binary object', obj)
-    }
-    return obj
+    if (Buffer.isBuffer(obj)) return obj
+    throw new VE('Not a valid binary object', obj)
   }
 }
 readonly(types.Bytes, 'kind', 'bytes')

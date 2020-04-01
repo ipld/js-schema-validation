@@ -1,8 +1,8 @@
 /* global it */
 'use strict'
+const { Buffer } = require('buffer')
 const main = require('../')
 const parse = require('./parse')
-const bytes = require('bytesish')
 
 const test = it
 
@@ -11,5 +11,5 @@ test('read bytes', async () => {
   type TestBytes bytes
   `
   const validate = main(parse(schema))
-  validate(bytes.native('asdf'), 'TestBytes')
+  validate(Buffer.from('asdf'), 'TestBytes')
 })
