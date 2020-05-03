@@ -166,6 +166,31 @@ types.Union = class Union extends SchemaType {
 readonly(types.Union, 'kind', 'union')
 readonly(types.Union, 'schemaType', true)
 
+types.Enum = class Enum extends SchemaType {
+  constructor (api, schema) {
+    super(api, schema)
+    this.representation = Object.keys(this.schema.representation)[0]
+    this.members = new Set()
+    let members = schema.representation[this.representation]
+    if (Object.keys(members).length === 0) members = schema.members
+    for (const [key, value] of Object.entries(members)) {
+      if (value === null) this.members.add(key)
+      else {
+        if (this.representation === 'int') this.members.add(parseInt(value))
+        else if (this.representation === 'string') this.members.add(value)
+        else throw new Error('Unknown representation')
+      }
+    }
+  }
+
+  validate (obj) {
+    if (this.members.has(obj)) return obj
+    throw new VE('Invalid enum value', obj)
+  }
+}
+readonly(types.Enum, 'kind', 'enum')
+readonly(types.Enum, 'schemaType', true)
+
 types.List = class List extends SchemaType {
   validate (obj) {
     if (!Array.isArray(obj)) throw new VE('Not encoded as list', obj)
