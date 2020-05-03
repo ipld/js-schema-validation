@@ -1,5 +1,5 @@
 {
-  "name": "ipld-schema-validation",
+  "name": "@ipld/schema-validation",
   "version": "0.0.0-dev",
   "description": "Validate decoded data against an IPLD Schema",
   "main": "index.js",
