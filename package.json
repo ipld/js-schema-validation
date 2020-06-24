@@ -3,23 +3,34 @@
   "version": "0.0.0-dev",
   "description": "Validate decoded data against an IPLD Schema",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "pretest": "standard",
-    "test": "npm run test:node && npm run test:browser",
+    "build": "rollup --config rollup.config.js",
+    "prepublishOnly": "npm run build",
+    "lint": "standard",
+    "test:cjs": "npm run build && mocha dist/test/test-*.cjs",
     "test:node": "mocha test/test-*.js",
-    "coverage": "nyc --reporter=html mocha test/test-*.js && npx st -d coverage -p 8080 --index=true",
-    "test:browser": "polendina --cleanup test/test-*.js"
+    "test:browser": "polendina --cleanup test/test-*.js",
+    "test": "npm run lint && npm run test:node && npm run test:browser && npm run test:cjs",
+    "coverage": "c8 --reporter=html mocha test/test-*.js && npx st -d coverage -p 8080"
+  },
+  "exports": {
+    "require": "./dist/index.cjs",
+    "import": "./index.js"
   },
   "keywords": [],
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (https://www.mikealrogers.com/)",
   "license": "(Apache-2.0 AND MIT)",
   "devDependencies": {
-    "@ipld/block": "^4.0.2",
-    "hundreds": "0.0.2",
+    "@ipld/block": "^5.0.0",
+    "globby": "^11.0.1",
+    "hundreds": "0.0.7",
     "ipld-schema": "^0.3.2",
-    "mocha": "^7.1.2",
+    "mocha": "^8.0.1",
+    "multiformats": "^1.1.10",
     "polendina": "^1.0.0",
-    "standard": "^14.3.3"
+    "rollup": "^2.18.0",
+    "standard": "^14.3.4"
   },
   "dependencies": {
     "bytesish": "^0.4.1"

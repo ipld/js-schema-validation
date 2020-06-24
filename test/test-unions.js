@@ -1,8 +1,8 @@
 /* global it */
-'use strict'
-const main = require('../')
-const parse = require('./parse')
-const Block = require('@ipld/block')
+import main from '../index.js'
+import parse from './parse.js'
+import Block from '@ipld/block/defaults.js'
+import { fromString } from 'multiformats/bytes.js'
 
 const test = it
 
@@ -64,5 +64,5 @@ test('kinded union', async () => {
   t(0)
   t(2.9)
   t(await Block.encoder({}, 'dag-cbor').cid())
-  t(Buffer.from('asdf'))
+  t(fromString('asdf'))
 })

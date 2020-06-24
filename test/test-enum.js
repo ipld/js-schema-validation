@@ -1,7 +1,6 @@
 /* global it */
-'use strict'
-const main = require('../')
-const parse = require('./parse')
+import main from '../index.js'
+import parse from './parse.js'
 
 const test = it
 

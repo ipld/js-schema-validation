@@ -1,8 +1,7 @@
 /* global it */
-'use strict'
-const assert = require('assert')
-const main = require('../')
-const parse = require('./parse')
+import assert from 'assert'
+import main from '../index.js'
+import parse from './parse.js'
 
 const test = it
 

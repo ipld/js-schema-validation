@@ -1,4 +1,3 @@
-'use strict'
-const schema = require('ipld-schema')
+import schema from 'ipld-schema'
 
-module.exports = schemaString => schema.parse(schemaString)
+export default schemaString => schema.parse(schemaString)

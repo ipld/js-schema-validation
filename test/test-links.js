@@ -1,8 +1,8 @@
 /* global it */
-'use strict'
-const main = require('../')
-const parse = require('./parse')
-const Block = require('@ipld/block')
+import main from '../index.js'
+import parse from './parse.js'
+import Block from '@ipld/block/defaults.js'
+import { fromString } from 'multiformats/bytes.js'
 
 const test = it
 
@@ -13,7 +13,7 @@ test('basic struct', async () => {
   }
   `
   const validate = main(parse(schema))
-  const b = Block.encoder(Buffer.from('asdf'), 'raw')
+  const b = Block.encoder(fromString('asdf'), 'raw')
   const origin = { b: await b.cid() }
   validate(origin, 'Test')
 })
@@ -44,7 +44,7 @@ test('link without expected type', async () => {
   }
   `
   const validate = main(parse(schema))
-  const b = Block.encoder(Buffer.from('asdf'), 'raw')
+  const b = Block.encoder(fromString('asdf'), 'raw')
   const origin = { b: await b.cid() }
   validate(origin, 'Test')
 })

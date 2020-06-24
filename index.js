@@ -1,6 +1,9 @@
-const { Buffer } = require('buffer')
 const types = {}
 
+const isBinary = o => {
+  if (o instanceof Uint8Array && o.constructor.name === 'Uint8Array') return true
+  return false
+}
 const strf = obj => JSON.stringify(obj)
 const cidSymbol = Symbol.for('@ipld/js-cid/CID')
 const isCID = node => !!(node && node[cidSymbol])
@@ -116,7 +119,7 @@ const getKind = value => {
     return 'float'
   }
   if (type === 'object') {
-    if (Buffer.isBuffer(value)) return 'bytes'
+    if (isBinary(value)) return 'bytes'
     if (isCID(value)) return 'link'
     if (Array.isArray(value)) return 'list'
     return 'map'
@@ -220,7 +223,7 @@ types.Link = class Link extends SchemaType {
 readonly(types.Link, 'kind', 'link')
 types.Bytes = class Bytes extends SchemaType {
   validate (obj) {
-    if (Buffer.isBuffer(obj)) return obj
+    if (isBinary(obj)) return obj
     throw new VE('Not a valid binary object', obj)
   }
 }
@@ -288,4 +291,4 @@ const create = (...schemas) => {
   }
   return addSchemas(api, ...schemas)
 }
-module.exports = create
+export default create

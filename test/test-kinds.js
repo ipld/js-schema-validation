@@ -1,8 +1,8 @@
 /* global it */
-'use strict'
-const assert = require('assert')
-const main = require('../')
-const parse = require('./parse')
+import assert from 'assert'
+import main from '../index.js'
+import parse from './parse.js'
+import { fromString } from 'multiformats/bytes.js'
 
 const test = it
 
@@ -26,7 +26,7 @@ test('all kinds', done => {
   _test('TestString', 'string')
   _test('TestInt', 120)
   _test('TestFloat', 1.2)
-  _test('TestBytes', Buffer.from('asdf'))
+  _test('TestBytes', fromString('asdf'))
   _test('TestMap', {})
   _test('TestList', [])
   _test('TestBool', true)
@@ -73,7 +73,7 @@ test('all kinds in struct', done => {
     string: 'test',
     int: 1,
     float: 1.1,
-    bytes: Buffer.from('test'),
+    bytes: fromString('test'),
     map: { hello: 'world' },
     list: [null],
     null: null

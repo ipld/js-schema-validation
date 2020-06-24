@@ -1,8 +1,7 @@
 /* global it */
-'use strict'
-const { Buffer } = require('buffer')
-const main = require('../')
-const parse = require('./parse')
+import main from '../index.js'
+import parse from './parse.js'
+import { fromString } from 'multiformats/bytes.js'
 
 const test = it
 
@@ -11,5 +10,5 @@ test('read bytes', async () => {
   type TestBytes bytes
   `
   const validate = main(parse(schema))
-  validate(Buffer.from('asdf'), 'TestBytes')
+  validate(fromString('asdf'), 'TestBytes')
 })
