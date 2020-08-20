@@ -1,6 +1,6 @@
 /* global it */
 import assert from 'assert'
-import main from '../index.js'
+import main from '@ipld/schema-validation'
 import parse from './parse.js'
 
 const test = it

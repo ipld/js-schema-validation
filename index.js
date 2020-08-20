@@ -5,8 +5,8 @@ const isBinary = o => {
   return false
 }
 const strf = obj => JSON.stringify(obj)
-const cidSymbol = Symbol.for('@ipld/js-cid/CID')
-const isCID = node => !!(node && node[cidSymbol])
+
+const isCID = obj => obj && typeof obj === 'object' && obj.asCID && obj.asCID === obj
 
 const readonly = (obj, key, value) => Object.defineProperty(obj, key, { value })
 

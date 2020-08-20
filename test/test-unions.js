@@ -1,8 +1,10 @@
 /* global it */
-import main from '../index.js'
+import main from '@ipld/schema-validation'
 import parse from './parse.js'
-import Block from '@ipld/block/defaults.js'
-import { fromString } from 'multiformats/bytes.js'
+import Block from '@ipld/block/defaults'
+import { create } from 'multiformats'
+
+const { fromString } = create().bytes
 
 const test = it
 
