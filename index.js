@@ -147,6 +147,14 @@ types.Union = class Union extends SchemaType {
     const kind = getKind(obj)
     const key = this.schema.representation.kinded[kind]
     if (!key) throw new VE('Union does not have kind', kind)
+    if (typeof key === 'object') {
+      if (key.kind === 'link') {
+        if (obj.asCID !== obj) throw new VE('Value is not link', 'link')
+        return obj
+      } else {
+        throw new Error('Not implemented')
+      }
+    }
     this.api[key].validate(obj)
     return obj
   }
